@@ -1,0 +1,87 @@
+library IEEE;
+use IEEE.std_logic_arith.all;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity vhdl_201901_sum_atw_mod is
+	port( A,B : in std_logic_vector(7 downto 0);
+			S : in std_logic_vector(4 downto 0);
+			Cin : in std_logic;
+			Y : out std_logic_vector(7 downto 0));
+end vhdl_201901_sum_atw_mod;
+
+architecture Behavioral of vhdl_201901_sum_atw_mod is
+	signal S_Cin : std_logic_vector(1 downto 0);
+	signal y1,y2,y3,yl,yr : std_logic_vector(7 downto 0);
+	signal alu_noshift : std_logic_vector(7 downto 0);	
+begin
+	
+	S_Cin <= S(0) & Cin;
+	
+	pro1 : process(A,B,S,Cin,S,y1,y2,y3,S_Cin)
+			variable carry : std_logic_vector(1 to 3);
+			variable arith_unit,logic_unit : std_logic_vector(7 downto 0);
+			variable tmp : std_logic;
+		begin
+		
+				carry(1) := Cin;
+				carry(2) := Cin;
+				carry(3) := '0';
+				
+				arith1 : for i in 0 to 7 loop
+						y1(i) <= (A(i) xor '0' xor carry(1));
+						carry(1) := carry(1) and A(i);
+					end loop arith1;
+				arith2 : for i in 0 to 7 loop
+						y2(i) <= (A(i) xor B(i) xor carry(2));
+						carry(2) := (A(i) and B(i)) or (B(i) and carry(2)) or(carry(2) and A(i));
+					end loop arith2;
+				arith3 : for i in 0 to 7 loop
+						y3(i) <= (A(i) xor '1' xor carry(3));
+						carry(3) := A(i) or carry(3);
+					end loop arith3;
+				
+				
+				Arithmetic : case( S_Cin ) is
+									when "00" => arith_unit := y1;
+									when "01" => arith_unit := y1;
+									when "10" => arith_unit := y2;
+									when others => arith_unit := y3;
+								end case Arithmetic;
+								
+				Logical : case S(1 downto 0) is
+									when "00" => logic_unit := A and B;
+									when "01" => logic_unit := A or B;
+									when "10" => logic_unit := A xor B;
+									when others => logic_unit := not A;
+								end case Logical;
+								
+				if(S(2) = '1') then
+					alu_noshift <= logic_unit;
+				else
+					alu_noshift <= arith_unit;
+				end if;
+				
+			end process pro1;
+			
+	pro2 : process(alu_noshift,yr,yl,S)
+		begin
+				shift1 : for i in 0 to 6 loop
+						yl(0) <= alu_noshift(7);
+						yl(i+1) <= alu_noshift(i);
+						end loop shift1;
+						
+				shift2: for i in 7 downto 1 loop
+						yr(7) <= alu_noshift(0);
+						yr(i-1) <= alu_noshift(i);
+						end loop shift2;
+						
+				Shift : case S(4 downto 3) is
+									when "00" => Y <= alu_noshift;
+									when "01" => Y <= yl;
+									when "10" => Y <= yr;
+									when others => Y <= "00000000";
+								end case Shift;
+			end process pro2;
+
+end Behavioral;
+
