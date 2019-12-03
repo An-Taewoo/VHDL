@@ -3,21 +3,22 @@ use IEEE.std_logic_arith.all;
 use IEEE.STD_LOGIC_1164.ALL;
 
 entity vhdl_201901_sum_atw_mod is
-	port( A,B : in std_logic_vector(7 downto 0);
-			S : in std_logic_vector(4 downto 0);
-			Cin : in std_logic;
+	port( A,B : in std_logic_vector(7 downto 0); //A, B : 피연산 입력(8bit)
+			S : in std_logic_vector(4 downto 0); //S : 연산방법을 결정하는 제어입력(5bit)
+			Cin : in std_logic; //Cin : 올림 수 입력(1bit)
 			Y : out std_logic_vector(7 downto 0));
 end vhdl_201901_sum_atw_mod;
 
 architecture Behavioral of vhdl_201901_sum_atw_mod is
-	signal S_Cin : std_logic_vector(1 downto 0);
-	signal y1,y2,y3,yl,yr : std_logic_vector(7 downto 0);
-	signal alu_noshift : std_logic_vector(7 downto 0);	
+	signal S_Cin : std_logic_vector(1 downto 0); //S_Cin : 산술연산 방법을 제어하기 위한 Signal
+	signal y1,y2,y3,yl,yr : std_logic_vector(7 downto 0); //y1, y2, y3 : 산술연산의 결과값을 저장하는 Signal
+						  //yl, yr : Shift 연산의 결과값을 저장하는 Signal
+	signal alu_noshift : std_logic_vector(7 downto 0);	 //alu_noshift : S(2)의 값에 의해 결정되는 값을 저장하는 Signal
 begin
 	
 	S_Cin <= S(0) & Cin;
 	
-	pro1 : process(A,B,S,Cin,S,y1,y2,y3,S_Cin)
+	pro1 : process(A,B,S,Cin,S,y1,y2,y3,S_Cin) //입력 받은 두 피연산 값을 제어입력에 따라 산술연산 또는 논리연산을 하여 중간 결과값을 저장하는 동작을 수행
 			variable carry : std_logic_vector(1 to 3);
 			variable arith_unit,logic_unit : std_logic_vector(7 downto 0);
 			variable tmp : std_logic;
@@ -63,7 +64,7 @@ begin
 				
 			end process pro1;
 			
-	pro2 : process(alu_noshift,yr,yl,S)
+	pro2 : process(alu_noshift,yr,yl,S) //pro1에서의 결과값을 제어입력 S(4:3)에 따라 Shift 연산을 하여 값을 출력PORT Y에 저장하는 동작을 수행
 		begin
 				shift1 : for i in 0 to 6 loop
 						yl(0) <= alu_noshift(7);
